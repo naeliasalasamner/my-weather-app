@@ -5,17 +5,27 @@ function App() {
 
   const [data, setData] = useState({})
   const [location, setLocation] = useState('')
+  const [ errorMessage, setErrorMessage ]= useState('');
   const apiKey = process.env.REACT_APP_WEATHER_API_KEY;
 
 const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`
 
-const searchLocation = (event) => {
+const searchLocation = async(event) => {
   if (event.key === 'Enter') {
-    axios.get(url).then((response) => {
-      setData(response.data)
-      console.log(response.data)
-    })
-    setLocation('')
+    try {
+      const response = await axios.get(url);
+      setData(response.data);
+      setErrorMessage('');
+      setLocation('')
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        setErrorMessage('No city foud, please check your spelling ;)')
+      } else {
+        setErrorMessage('An error occurd. Please try again')
+      }
+      setData({});
+      setLocation('')
+    }
   }
 }
 
@@ -29,13 +39,16 @@ return (
         placeholder='Enter Location'
         type="text" />
     </div>
+
+    {errorMessage && <p className="error">{errorMessage}</p>}
+
     <div className="container">
       <div className="top">
         <div className="location">
           <p>{data.name}</p>
         </div>
         <div className="temp">
-          {data.main ? <h1>{data.main.temp.toFixed()}°F</h1> : null}
+          {data.main ? <h1>{data.main.temp.toFixed()}°C</h1> : null}
         </div>
         <div className="description">
           {data.weather ? <p>{data.weather[0].main}</p> : null}
@@ -45,7 +58,7 @@ return (
       {data.name !== undefined &&
         <div className="bottom">
           <div className="feels">
-            {data.main ? <p className='bold'>{data.main.feels_like.toFixed()}°F</p> : null}
+            {data.main ? <p className='bold'>{data.main.feels_like.toFixed()}°C</p> : null}
             <p>Feels Like</p>
           </div>
           <div className="humidity">
